@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Admin · GroundsNearMe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+
+<header class="topbar" data-topbar></header>
+
+<main>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Internal</p>
+      <h1 class="section-heading">Admin</h1>
+      <p class="meta lede">
+        Every ground on the platform, the WhatsApp intake queue, and bookings
+        across all grounds. New grounds are added here — there is no public
+        self-serve listing form, by design.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--alt reveal">
+    <div class="container">
+      <div class="card-outer">
+        <div class="card-inner">
+          <h2 class="card-title panel-title">WhatsApp intake queue</h2>
+          <div data-leads><p class="empty">Loading…</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section reveal">
+    <div class="container">
+      <div class="card-outer">
+        <div class="card-inner">
+          <h2 class="card-title panel-title">Grounds</h2>
+          <div data-grounds><p class="empty">Loading…</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt reveal">
+    <div class="container">
+      <div class="card-outer">
+        <div class="card-inner">
+          <h2 class="card-title panel-title">Recent bookings</h2>
+          <div data-bookings><p class="empty">Loading…</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Not started: the create-ground form with image upload, booking status
+       changes, and the subscription cycle screen (issue a link, flip to paid).
+       All three have routes already — see the API repo's ROADMAP steps 6 and 8. -->
+</main>
+
+<script src="https://unpkg.com/@phosphor-icons/web@2.0.3/src/index.js"></script>
+<script type="module" src="/js/page-admin.js"></script>
+</body>
+</html>

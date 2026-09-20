@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Finance · GroundsNearMe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+
+<header class="topbar" data-topbar></header>
+
+<main>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Private</p>
+      <h1 class="section-heading">Finance</h1>
+      <p class="meta lede">
+        Superadmin only. An <code>admin</code> token gets a 403 here from the
+        Worker and again from inside <code>finance_overview()</code>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section reveal">
+    <div class="container">
+      <div class="stat-grid" data-tiles></div>
+    </div>
+  </section>
+
+  <section class="section section--alt reveal">
+    <div class="container">
+      <div class="card-outer">
+        <div class="card-inner">
+          <h2 class="card-title panel-title">Monthly trend</h2>
+          <div data-trend><p class="empty">Loading…</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section reveal">
+    <div class="container">
+      <div class="card-outer">
+        <div class="card-inner">
+          <h2 class="card-title panel-title">By ground</h2>
+          <div data-grounds><p class="empty">Loading…</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="https://unpkg.com/@phosphor-icons/web@2.0.3/src/index.js"></script>
+<script type="module" src="/js/page-finance.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+#:schema node_modules/wrangler/config-schema.json
+# ---------------------------------------------------------------------------
+# GroundsNearMe — staff surfaces (owner dashboard, admin view, finance).
+#
+# A Cloudflare Pages project serving static files only. There are no Pages
+# Functions here on purpose: every privileged read and write goes to the
+# groundsnearme-api Worker, which holds the CORS allowlist, the rate limits and
+# the role gates. Adding a Function here would create a second place where
+# authorisation could be got wrong.
+#
+# Nothing in this repository is secret. The anon key and the API base URL are
+# public by design — they are RLS-bound and the Worker re-checks every caller's
+# token. Do not add a service-role key, a JWT secret, or any Supabase credential
+# beyond the anon key to this project.
+# ---------------------------------------------------------------------------
+name = "groundsnearme-admin"
+compatibility_date = "2026-08-01"
+pages_build_output_dir = "public"
+
+# There is deliberately no [vars] block. A static Pages project cannot read
+# wrangler vars without a Function, and adding one just to inject two public
+# values would reintroduce the server-side surface this project avoids. The API
+# base URL and the anon key are chosen by hostname in public/js/config.js —
+# both are public values, so a config file is the honest place for them.

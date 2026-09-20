@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Sign in · GroundsNearMe staff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+
+<!-- No style attributes anywhere in this project: the CSP in public/_headers
+     has no 'unsafe-inline' in style-src, so a `style=` would be silently
+     dropped and the page would render wrong only in production. -->
+
+<main class="auth-shell">
+  <div class="card-outer auth-card">
+    <div class="card-inner card-inner--roomy">
+
+      <p class="eyebrow eyebrow--tight">GroundsNearMe</p>
+      <h1 class="section-heading h-sm meta--before">Staff sign in</h1>
+
+      <form data-signin novalidate>
+        <label class="field-label" for="email">Email</label>
+        <input class="input" id="email" name="email" type="email" autocomplete="username" required />
+
+        <label class="field-label" for="password">Password</label>
+        <input class="input input--last" id="password" name="password" type="password"
+               autocomplete="current-password" required />
+
+        <button class="btn-primary btn-block" type="submit">Sign in</button>
+
+        <p class="error form-error" data-error hidden></p>
+      </form>
+
+      <p class="meta meta--after">
+        Owners and staff only. Players sign in on the main site.
+      </p>
+
+    </div>
+  </div>
+</main>
+
+<script type="module" src="/js/page-signin.js"></script>
+</body>
+</html>

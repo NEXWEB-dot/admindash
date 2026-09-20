@@ -1,0 +1,19 @@
+**/node_modules/
+node_modules/
+**/.wrangler/
+.wrangler/
+.env
+.env.*
+!.env.example
+
+# No secrets belong in this repository at all — the staff surfaces are static
+# files and every privileged call goes through the API Worker. These rules exist
+# so an accidental local secrets file cannot be committed.
+**/.dev.vars*
+.dev.vars*
+!**/.dev.vars.example
+!.dev.vars.example
+
+dist/
+.DS_Store
+Thumbs.db

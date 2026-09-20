@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>My grounds · GroundsNearMe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+
+<header class="topbar" data-topbar></header>
+
+<main>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Owner dashboard</p>
+      <h1 class="section-heading">My grounds</h1>
+      <p class="meta lede">
+        Listing status, upcoming bookings and weekly hours. Pricing, tier and
+        featured placement are set by the GroundsNearMe team — message us on
+        WhatsApp to change them.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--alt reveal">
+    <div class="container">
+      <div class="card-outer">
+        <div class="card-inner">
+          <h2 class="card-title panel-title">Grounds</h2>
+          <div data-grounds><p class="empty">Loading…</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section reveal">
+    <div class="container">
+      <div class="card-outer">
+        <div class="card-inner">
+          <h2 class="card-title panel-title">Upcoming bookings</h2>
+          <div data-bookings><p class="empty">Loading…</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Not started: weekly hours grid, closures, subscriptions (read-only).
+       Backend routes for all three exist — see the API repo's ROADMAP step 5. -->
+</main>
+
+<script src="https://unpkg.com/@phosphor-icons/web@2.0.3/src/index.js"></script>
+<script type="module" src="/js/page-owner.js"></script>
+</body>
+</html>

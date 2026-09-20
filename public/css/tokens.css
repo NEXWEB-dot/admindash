@@ -1,0 +1,137 @@
+/* ---------------------------------------------------------------------------
+ * GroundsNearMe — design tokens.
+ *
+ * Copied verbatim from the public site's stylesheet, per docs/DESIGN-TOKENS.md.
+ * Do not add a colour here. If a staff screen needs one that is not in this
+ * file, that is a design decision to make deliberately, not a hex to inline.
+ *
+ * Three additions the public site does not have are marked ADDED below and are
+ * the only three sanctioned by DESIGN-TOKENS.md: a `closed` badge variant,
+ * tabular numerals, and a reduced-motion block.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --white:      #ffffff;
+  --off:        #f7f8f6;   /* alternating section background */
+  --emerald:    #0d4a2c;   /* primary brand, dark surfaces, button text on lime */
+  --emerald-mid:#1a6b40;
+  --lime:       #4ade80;   /* primary action fill, "slots open" */
+  --lime-dark:  #22c55e;   /* eyebrow text */
+  --ink:        #0d1a0f;   /* body text, headings */
+  --muted:      #4a5c50;   /* secondary text, labels */
+  --border:     #d8e8dc;
+  --card-bg:    #f0f7f3;   /* outer card frame */
+
+  /* The site's single easing curve — an ease-out quint. Every transition. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ink);
+  background: var(--white);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Zero radius everywhere, without exception. The only rounded element on the
+ * public site is .btn-icon, a 22px circle. */
+button, input, select, textarea, img, table { border-radius: 0; }
+
+/* --- Type ---------------------------------------------------------------- */
+/* Large text gets negative tracking; small text gets positive tracking and
+ * uppercase. A table header is a field label, not a shrunken heading. */
+
+.section-heading {
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lime-dark);
+}
+
+.field-label,
+th {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.meta { font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
+
+.card-title { font-size: 1.0625rem; font-weight: 700; letter-spacing: -0.01em; }
+
+/* ADDED — figures must align down a column. The public site never shows a
+ * table of numbers and so has no token for this. */
+.num { font-variant-numeric: tabular-nums; text-align: right; }
+
+/* --- Layout -------------------------------------------------------------- */
+/* Horizontal padding and max-width match the public site exactly so the two
+ * surfaces line up when a user moves between them. Vertical rhythm is tighter:
+ * a dashboard is denser than a marketing page. */
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
+.section   { padding: 56px 0; }
+.section--alt { background: var(--off); }
+
+@media (max-width: 1024px) { .container { padding: 0 32px; } }
+@media (max-width: 768px)  { .container { padding: 0 20px; } }
+
+/* --- The doubled card frame --------------------------------------------- */
+/* A 6px gutter of --card-bg around a white panel. This is the most
+ * recognisable thing about the visual language — use both elements, never a
+ * single bordered div. */
+
+.card-outer { background: var(--card-bg); border: 1px solid var(--border); padding: 6px; }
+.card-inner {
+  background: var(--white);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  padding: 20px;
+}
+
+/* --- Badges ------------------------------------------------------------- */
+
+.badge {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+}
+.badge-open { background: var(--lime);   color: var(--emerald); }
+.badge-full { background: var(--border); color: var(--muted); }
+
+/* ADDED — the API returns a third availability state the mock data never
+ * produced. A closed ground is not an error, so it reuses badge-full's
+ * treatment rather than introducing a red. */
+.badge-closed { background: var(--border); color: var(--muted); }
+
+/* Four treatments for a dozen statuses, on purpose. */
+.badge-positive { background: var(--lime);    color: var(--emerald); }
+.badge-waiting  { background: var(--card-bg); color: var(--emerald); outline: 1px solid var(--border); }
+.badge-dead     { background: var(--border);  color: var(--muted); }
+.badge-done     { background: var(--emerald); color: var(--white); }
+
+/* ADDED — the public site has no reduced-motion block. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; }
+}

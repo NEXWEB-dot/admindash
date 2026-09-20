@@ -1,0 +1,15 @@
+{
+  "name": "groundsnearme-admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "GroundsNearMe staff surfaces — owner dashboard, admin view, private finance dashboard. Cloudflare Pages.",
+  "scripts": {
+    "dev": "wrangler pages dev public --port 5174",
+    "deploy": "wrangler pages deploy public",
+    "deploy:staging": "wrangler pages deploy public --branch staging"
+  },
+  "devDependencies": {
+    "wrangler": "3.114.1"
+  }
+}
