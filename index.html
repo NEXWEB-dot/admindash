@@ -2973,31 +2973,53 @@
       const id = form.elements['booking_id'].value;
       const reason = form.elements['cancellation_reason'].value.trim() || 'Cancelled by staff';
       try {
-        let success = false;
-        // 1. Try release_booking RPC
+        // Try release_booking RPC first (security definer, always works for staff)
+        let rpcResult = null;
+        let rpcErr = null;
         try {
-          const res = await sbFetch('rpc/release_booking', {
+          rpcResult = await sbFetch('rpc/release_booking', {
             method: 'POST',
             body: JSON.stringify({ p_booking_id: id, p_reason: reason })
           });
-          if (res && res.ok) success = true;
-        } catch (_) {}
+        } catch (e) { rpcErr = e; }
 
-        // 2. Direct PATCH fallback
-        if (!success) {
-          await sbFetch(`bookings?id=eq.${id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status: 'cancelled', cancellation_reason: reason, cancelled_at: new Date().toISOString() }),
-            headers: { 'Prefer': 'return=minimal' }
-          });
+        if (rpcResult && rpcResult.ok === true) {
+          showToast('Booking cancelled & slot released!', 'success');
+          closeModal('modal-cancel-booking');
+          form.reset();
+          await refreshAllData();
+          return;
         }
 
-        showToast('Booking cancelled & slot released successfully!', 'info');
+        if (rpcResult && rpcResult.ok === false) {
+          const msg = rpcResult.error?.message || 'Could not cancel this booking.';
+          showToast(`Cancel failed: ${msg}`, 'error');
+          return;
+        }
+
+        // RPC not available — fallback to direct PATCH
+        console.warn('[GNM Admin] release_booking RPC unavailable, falling back to PATCH. Apply fix SQL in Supabase.', rpcErr?.message);
+        await sbFetch(`bookings?id=eq.${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            status: 'cancelled',
+            cancellation_reason: reason,
+            cancelled_at: new Date().toISOString()
+          }),
+          headers: { 'Prefer': 'return=minimal' }
+        });
+
+        showToast('Booking cancelled & slot released successfully!', 'success');
         closeModal('modal-cancel-booking');
         form.reset();
         await refreshAllData();
       } catch (err) {
-        showToast(err.message, 'error');
+        if (err.message && err.message.includes('row-level security')) {
+          showToast('Permission denied. Apply the fix SQL in Supabase SQL Editor.', 'error');
+        } else {
+          showToast(err.message, 'error');
+        }
+        console.error('[GNM Admin] handleConfirmCancelBooking error:', err);
       }
     }
 
