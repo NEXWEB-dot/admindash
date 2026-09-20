@@ -1604,7 +1604,7 @@
     // Secure Rate Limiter for Staff Login
     const AdminRateLimiter = {
       MAX_ATTEMPTS: 5,
-      LOCKOUT_MS: 300000, // 5 minutes
+      LOCKOUT_MS: 120000, // 2 minutes max
       STORAGE_KEY: 'gnm_admin_rate_limit',
 
       getState() {
