@@ -2047,22 +2047,59 @@
       }
     }
 
+    function getCurrentWeekRange(referenceDateStr = null) {
+      const ref = referenceDateStr ? new Date(referenceDateStr) : new Date();
+      const d = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
+      const day = d.getDay(); // 0: Sun, 1: Mon...
+      const diffToMonday = (day === 0 ? -6 : 1 - day);
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diffToMonday);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      const fmt = dt => dt.toISOString().split('T')[0];
+      const fmtPretty = dt => dt.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+
+      return {
+        startStr: fmt(monday),
+        endStr: fmt(sunday),
+        label: `${fmtPretty(monday)} – ${fmtPretty(sunday)}`,
+        monday,
+        sunday
+      };
+    }
+
     function renderOverviewView(container) {
       const superUser = isSuperAdmin();
-      const totalRevenue = state.bookings
-        .filter(b => b.status === 'confirmed' || b.status === 'completed')
-        .reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+      const confirmedBookings = state.bookings.filter(b => b.status === 'confirmed' || b.status === 'completed');
+      const totalRevenue = confirmedBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
       const activeGrounds = state.grounds.filter(g => g.status === 'active').length;
       const pendingLeads = state.leads.filter(l => l.status === 'new' || l.status === 'contacted').length;
+
+      const currentWeek = getCurrentWeekRange();
+      const weekBookings = confirmedBookings.filter(b => 
+        b.booking_date >= currentWeek.startStr && b.booking_date <= currentWeek.endStr
+      );
+      const weekGross = weekBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+      const weekCommission = Math.round(weekGross * 0.10);
 
       const financialCardHtml = superUser ? `
         <div class="stat-card">
           <div class="stat-top">
-            <span class="stat-label">Gross Volume</span>
+            <span class="stat-label">Gross Volume (All Time)</span>
             <div class="stat-icon-wrap"><i class="ph ph-currency-dollar"></i></div>
           </div>
           <div class="stat-value display-num">PKR ${totalRevenue.toLocaleString()}</div>
           <div class="stat-sub positive"><i class="ph ph-trend-up"></i> Confirmed bookings</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #d97706;">
+          <div class="stat-top">
+            <span class="stat-label">Week's 10% Comm Due</span>
+            <div class="stat-icon-wrap" style="color:#d97706;"><i class="ph ph-receipt"></i></div>
+          </div>
+          <div class="stat-value display-num" style="color:#b45309;">PKR ${weekCommission.toLocaleString()}</div>
+          <div class="stat-sub positive"><i class="ph ph-calendar-check"></i> Due Sunday (${currentWeek.label})</div>
         </div>
       ` : `
         <div class="stat-card" style="opacity:0.75;">
@@ -2076,7 +2113,7 @@
       `;
 
       container.innerHTML = `
-        <div class="stats-grid">
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
           <div class="stat-card">
             <div class="stat-top">
               <span class="stat-label">Active Grounds</span>
@@ -2493,9 +2530,15 @@
         <div class="panel-card">
           <div class="table-responsive">
             <table class="data-table">
-              <thead><tr><th>Booking Ref</th><th>Ground</th><th>Booking Date</th><th>Slot Time</th><th>Duration</th><th>Customer</th><th>Total Amount</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Booking Ref</th><th>Ground</th><th>Booking Date</th><th>Slot Time</th><th>Duration</th><th>Customer</th><th>${isSuperAdmin() ? 'Amount & 10% Comm' : 'Total Amount'}</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
-                ${filtered.map(b => `
+                ${filtered.map(b => {
+                  const superUser = isSuperAdmin();
+                  const total = Number(b.total_amount || 0);
+                  const comm = Math.round(total * 0.10);
+                  const net = total - comm;
+
+                  return `
                   <tr>
                     <td class="mono font-semibold" style="color:var(--emerald);">${escapeHtml(b.booking_ref)}</td>
                     <td style="font-weight:700;">${escapeHtml(b.ground?.name || 'Ground')}</td>
@@ -2503,7 +2546,13 @@
                     <td class="mono">${b.start_time.slice(0,5)} - ${b.end_time.slice(0,5)}</td>
                     <td>${b.duration_minutes}m</td>
                     <td>${escapeHtml(b.contact_name || 'Walk-in')}</td>
-                    <td class="display-num" style="font-size:1rem;">PKR ${Number(b.total_amount).toLocaleString()}</td>
+                    <td class="display-num" style="font-size:1rem;">
+                      <div style="font-weight:700;">PKR ${total.toLocaleString()}</div>
+                      ${superUser && b.status !== 'cancelled' ? `
+                        <div style="font-size:0.7rem; color:#b45309; font-weight:700;">10% Comm: PKR ${comm.toLocaleString()}</div>
+                        <div style="font-size:0.6875rem; color:var(--emerald); font-weight:600;">Turf Net: PKR ${net.toLocaleString()}</div>
+                      ` : ''}
+                    </td>
                     <td><span class="badge badge-${b.payment_status}">${b.payment_status}</span></td>
                     <td>
                       <select class="form-control" style="padding:4px 8px; font-size:0.75rem; width:115px;" onchange="setBookingStatus('${b.id}', this.value)">
@@ -2526,7 +2575,8 @@
                       </div>
                     </td>
                   </tr>
-                `).join('') || '<tr><td colspan="10" style="text-align:center; padding:40px;">No bookings matching filter.</td></tr>'}
+                  `;
+                }).join('') || '<tr><td colspan="10" style="text-align:center; padding:40px;">No bookings matching filter.</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -2687,55 +2737,177 @@
         `;
         return;
       }
-      const gross = state.bookings
-        .filter(b => b.status === 'completed' || b.status === 'confirmed')
-        .reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
-      const commission = gross * 0.10;
+
+      const currentWeek = getCurrentWeekRange();
+      const confirmedBookings = state.bookings.filter(b => b.status === 'completed' || b.status === 'confirmed');
+      const grossAll = confirmedBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+      const commissionAll = Math.round(grossAll * 0.10);
+
+      // Bookings strictly in this week's settlement cycle (Mon-Sun)
+      const weekBookings = confirmedBookings.filter(b => 
+        b.booking_date >= currentWeek.startStr && b.booking_date <= currentWeek.endStr
+      );
+      const weekGross = weekBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+      const weekCommission = Math.round(weekGross * 0.10);
+      const weekTurfPayout = weekGross - weekCommission;
+
       container.innerHTML = `
-        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <!-- TOP KPI STATS -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom:24px;">
+          <div class="stat-card" style="border-left:3px solid #d97706;">
+            <div class="stat-top">
+              <span class="stat-label">Week's 10% Comm Receivable</span>
+              <div class="stat-icon-wrap" style="color:#d97706;"><i class="ph ph-receipt"></i></div>
+            </div>
+            <div class="stat-value display-num" style="color:#b45309;">PKR ${weekCommission.toLocaleString()}</div>
+            <div class="stat-sub positive"><i class="ph ph-calendar-check"></i> Due Sunday (${currentWeek.label})</div>
+          </div>
           <div class="stat-card">
             <div class="stat-top">
-              <span class="stat-label">Platform Gross GMV</span>
+              <span class="stat-label">Week's Gross Pitch Volume</span>
               <div class="stat-icon-wrap"><i class="ph ph-money"></i></div>
             </div>
-            <div class="stat-value display-num">PKR ${gross.toLocaleString()}</div>
-            <div class="stat-sub positive"><i class="ph ph-arrow-up-right"></i> Total player booking volume</div>
+            <div class="stat-value display-num">PKR ${weekGross.toLocaleString()}</div>
+            <div class="stat-sub"><i class="ph ph-clock"></i> ${weekBookings.length} slots booked this week</div>
           </div>
           <div class="stat-card">
             <div class="stat-top">
-              <span class="stat-label">Estimated Commission (10%)</span>
-              <div class="stat-icon-wrap"><i class="ph ph-chart-pie-slice"></i></div>
+              <span class="stat-label">All-Time 10% Commission</span>
+              <div class="stat-icon-wrap" style="color:var(--emerald);"><i class="ph ph-chart-pie-slice"></i></div>
             </div>
-            <div class="stat-value display-num" style="color:var(--emerald);">PKR ${commission.toLocaleString()}</div>
-            <div class="stat-sub"><i class="ph ph-shield-check"></i> Superadmin Ledger</div>
+            <div class="stat-value display-num" style="color:var(--emerald);">PKR ${commissionAll.toLocaleString()}</div>
+            <div class="stat-sub"><i class="ph ph-shield-check"></i> Superadmin Total Earnings</div>
           </div>
           <div class="stat-card">
             <div class="stat-top">
-              <span class="stat-label">Grounds Payout Due</span>
+              <span class="stat-label">Total Platform GMV</span>
               <div class="stat-icon-wrap"><i class="ph ph-bank"></i></div>
             </div>
-            <div class="stat-value display-num">PKR ${(gross - commission).toLocaleString()}</div>
-            <div class="stat-sub"><i class="ph ph-check"></i> Direct to turf owners</div>
+            <div class="stat-value display-num">PKR ${grossAll.toLocaleString()}</div>
+            <div class="stat-sub positive"><i class="ph ph-trend-up"></i> All confirmed bookings</div>
           </div>
         </div>
-        <div class="panel-card">
-          <div class="panel-header">
-            <span class="panel-title"><i class="ph ph-coins"></i> Revenue Breakdown by Ground</span>
+
+        <!-- WEEKLY SETTLEMENT & COMMISSION COLLECTION LEDGER -->
+        <div class="panel-card" style="margin-bottom:24px;">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+              <span class="panel-title"><i class="ph ph-receipt"></i> Weekly Commission Collection Ledger (${currentWeek.label})</span>
+              <div style="font-size:0.75rem; color:var(--muted); margin-top:2px;">
+                10% per-booking fee due from turf owners at week-end (Sunday 11:59 PM)
+              </div>
+            </div>
+            <span class="badge" style="background:#fef3c7; color:#92400e; font-weight:800; padding:6px 12px; font-size:0.8rem;">
+              Week Total Due: PKR ${weekCommission.toLocaleString()}
+            </span>
           </div>
           <div class="table-responsive">
             <table class="data-table">
-              <thead><tr><th>Ground Name</th><th>Hourly Rate</th><th>Total Bookings</th><th>Gross GMV</th><th>Platform Take</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Ground Name</th>
+                  <th>Manager / Contact</th>
+                  <th>WhatsApp</th>
+                  <th>This Week's Bookings</th>
+                  <th>This Week's Gross</th>
+                  <th>10% Comm Due</th>
+                  <th>Settlement Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
               <tbody>
                 ${state.grounds.map(g => {
-                  const gBookings = state.bookings.filter(b => b.ground_id === g.id);
-                  const gGross = gBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+                  const gWeekBookings = weekBookings.filter(b => b.ground_id === g.id);
+                  const gGross = gWeekBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+                  const gComm = Math.round(gGross * 0.10);
+                  const gNet = gGross - gComm;
+                  const waDigits = (g.whatsapp_number || '').replace(/\D/g, '');
+
+                  const invoiceMsg = encodeURIComponent(
+                    `Assalam o Alaikum ${g.contact_name || 'Partner'},\n\n` +
+                    `Here is the weekly GroundsNearMe 10% commission statement for *${g.name}* for week *${currentWeek.label}*:\n\n` +
+                    `• Bookings Completed: ${gWeekBookings.length} slots\n` +
+                    `• Total Gross GMV: PKR ${gGross.toLocaleString()}\n` +
+                    `• *10% Platform Commission Due: PKR ${gComm.toLocaleString()}*\n` +
+                    `• Net Turf Share (90%): PKR ${gNet.toLocaleString()}\n\n` +
+                    `Please transfer the commission to JazzCash / EasyPaisa (03362308445 - Faisal Shayan) by Sunday midnight. JazakAllah!`
+                  );
+
                   return `
                     <tr>
-                      <td style="font-weight:800;">${g.name}</td>
+                      <td style="font-weight:800; color:var(--ink);">${escapeHtml(g.name)}</td>
+                      <td>${escapeHtml(g.contact_name || 'Turf Manager')}</td>
+                      <td class="mono">
+                        ${waDigits ? `
+                          <a href="https://wa.me/${waDigits}" target="_blank" style="color:var(--emerald); font-weight:700; text-decoration:none;">
+                            <i class="ph ph-whatsapp-logo"></i> +${waDigits}
+                          </a>
+                        ` : '<span style="color:var(--muted);">—</span>'}
+                      </td>
+                      <td><span class="badge" style="background:#f1f5f9; color:#334155; font-weight:700;">${gWeekBookings.length} slots</span></td>
+                      <td class="display-num" style="color:var(--ink); font-weight:700;">PKR ${gGross.toLocaleString()}</td>
+                      <td class="display-num" style="color:#b45309; font-weight:800; font-size:1.05rem;">
+                        ${gComm > 0 ? `PKR ${gComm.toLocaleString()}` : '<span style="color:var(--muted); font-size:0.85rem;">0 PKR</span>'}
+                      </td>
+                      <td>
+                        ${gComm > 0 ? `
+                          <span class="badge" style="background:#fef3c7; color:#92400e; font-weight:700;">Due Sunday</span>
+                        ` : `
+                          <span class="badge" style="background:#f1f5f9; color:var(--muted);">No Bookings</span>
+                        `}
+                      </td>
+                      <td>
+                        ${waDigits && gComm > 0 ? `
+                          <a href="https://wa.me/${waDigits}?text=${invoiceMsg}" target="_blank" class="btn btn-emerald btn-sm" style="text-decoration:none; padding:4px 10px; font-size:0.75rem; font-weight:700;" title="Send Weekly 10% Commission Bill on WhatsApp">
+                            <i class="ph ph-whatsapp-logo"></i> Send Bill
+                          </a>
+                        ` : waDigits ? `
+                          <a href="https://wa.me/${waDigits}?text=${invoiceMsg}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none; padding:4px 10px; font-size:0.75rem;" title="Send Weekly Statement">
+                            <i class="ph ph-whatsapp-logo"></i> Statement
+                          </a>
+                        ` : `
+                          <span style="color:var(--muted); font-size:0.75rem;">No WhatsApp</span>
+                        `}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+              <tfoot>
+                <tr style="background:#f8fafc; font-weight:800; border-top:2px solid var(--border);">
+                  <td colspan="4" style="text-align:right; padding:12px 16px;">Week Total (${currentWeek.label}):</td>
+                  <td class="display-num" style="color:var(--ink); font-size:1.05rem;">PKR ${weekGross.toLocaleString()}</td>
+                  <td class="display-num" style="color:#b45309; font-size:1.15rem;">PKR ${weekCommission.toLocaleString()}</td>
+                  <td colspan="2" style="color:#92400e; font-size:0.8rem;">Payable by Sunday midnight</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- ALL-TIME HISTORICAL REVENUE BY GROUND -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title"><i class="ph ph-coins"></i> All-Time Revenue & 10% Commission by Ground</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead><tr><th>Ground Name</th><th>Rate / Hr</th><th>All-Time Bookings</th><th>Gross GMV</th><th>10% Platform Total</th><th>Owner Payout (90%)</th></tr></thead>
+              <tbody>
+                ${state.grounds.map(g => {
+                  const gBookings = confirmedBookings.filter(b => b.ground_id === g.id);
+                  const gGross = gBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+                  const gComm = Math.round(gGross * 0.10);
+                  const gPayout = gGross - gComm;
+
+                  return `
+                    <tr>
+                      <td style="font-weight:800;">${escapeHtml(g.name)}</td>
                       <td class="display-num">PKR ${Number(g.price_per_hour).toLocaleString()}</td>
                       <td>${gBookings.length} bookings</td>
                       <td class="display-num" style="color:var(--ink);">PKR ${gGross.toLocaleString()}</td>
-                      <td class="display-num" style="color:var(--emerald);">PKR ${(gGross * 0.1).toLocaleString()}</td>
+                      <td class="display-num" style="color:var(--emerald); font-weight:800;">PKR ${gComm.toLocaleString()}</td>
+                      <td class="display-num" style="color:#475569;">PKR ${gPayout.toLocaleString()}</td>
                     </tr>
                   `;
                 }).join('')}
