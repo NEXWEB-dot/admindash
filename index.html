@@ -2206,19 +2206,32 @@
       const weekGross = weekBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
       const weekCommission = Math.round(weekGross * 0.10);
 
+      const totalCommission = Math.round(totalRevenue * 0.10);
+
       const financialCardHtml = superUser ? `
-        <div class="stat-card">
+        <div class="stat-card" style="border-left:3px solid var(--emerald);">
           <div class="stat-top">
-            <span class="stat-label">Gross Volume (All Time)</span>
+            <span class="stat-label">Gross Booking Volume</span>
             <div class="stat-icon-wrap"><i class="ph ph-currency-dollar"></i></div>
           </div>
           <div class="stat-value display-num">PKR ${totalRevenue.toLocaleString()}</div>
-          <div class="stat-sub positive"><i class="ph ph-trend-up"></i> Confirmed bookings</div>
+          <div style="margin-top:6px; font-size:0.8125rem; background:#ecfdf5; border:1px solid #a7f3d0; color:#047857; padding:5px 8px; border-radius:6px; font-weight:700; display:flex; justify-content:space-between; align-items:center;">
+            <span>10% Platform Cut:</span>
+            <span class="mono" style="font-size:0.9rem;">PKR ${totalCommission.toLocaleString()}</span>
+          </div>
         </div>
-        <div class="stat-card" style="border-left:3px solid #d97706;">
+        <div class="stat-card" style="border-left:3px solid var(--lime-dark); background:linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);">
           <div class="stat-top">
-            <span class="stat-label">Week's 10% Comm Due</span>
-            <div class="stat-icon-wrap" style="color:#d97706;"><i class="ph ph-receipt"></i></div>
+            <span class="stat-label" style="color:var(--emerald); font-weight:800;">Platform Revenue (10% Total)</span>
+            <div class="stat-icon-wrap" style="color:var(--emerald); background:rgba(13,74,44,0.1);"><i class="ph ph-coins"></i></div>
+          </div>
+          <div class="stat-value display-num" style="color:var(--emerald);">PKR ${totalCommission.toLocaleString()}</div>
+          <div class="stat-sub positive"><i class="ph ph-trend-up"></i> All-time 10% booking commission</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #d97706; background:linear-gradient(180deg, #ffffff 0%, #fffbeb 100%);">
+          <div class="stat-top">
+            <span class="stat-label" style="color:#b45309; font-weight:800;">Week's 10% Comm Due</span>
+            <div class="stat-icon-wrap" style="color:#d97706; background:rgba(217,119,6,0.1);"><i class="ph ph-receipt"></i></div>
           </div>
           <div class="stat-value display-num" style="color:#b45309;">PKR ${weekCommission.toLocaleString()}</div>
           <div class="stat-sub positive"><i class="ph ph-calendar-check"></i> Due Sunday (${currentWeek.label})</div>
