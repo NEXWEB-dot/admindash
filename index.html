@@ -2011,15 +2011,26 @@
     async function refreshAllData(silent = false) {
       try {
         const groundsSelect = 'id,slug,name,owner_id,area_id,price_per_hour,weekend_price_per_hour,commission_rate,ground_type,surface,whatsapp_number,contact_name,address,status,listing_tier,amenities,description,created_at,area:areas(id,name,slug)';
-        const bookingsSelect = 'id,booking_ref,ground_id,booking_date,start_time,end_time,duration_minutes,status,payment_status,total_amount,contact_name,source,ground:grounds(id,name,slug)';
         const leadsSelect = 'id,owner_name,whatsapp_number,phone,ground_name,area_text,city,asking_price,source,status,notes,created_at';
         const subsSelect = 'id,owner_id,ground_id,tier,cycle_start,cycle_end,amount,currency,status,payment_method,invoice_ref,paid_at,ground:grounds(id,name)';
 
         const isSuper = isSuperAdmin();
+
+        // Use get_all_admin_bookings RPC (security-definer) — bypasses RLS and returns ground names via join.
+        // Falls back to direct query if RPC not yet deployed.
+        const bookingsFetch = sbFetch('rpc/get_all_admin_bookings', {
+          method: 'POST',
+          body: JSON.stringify({ p_limit: 200, p_offset: 0 })
+        }).catch(async (rpcErr) => {
+          console.warn('[GNM] get_all_admin_bookings RPC failed, falling back to direct query:', rpcErr.message);
+          const bookingsSelect = 'id,booking_ref,ground_id,booking_date,start_time,end_time,duration_minutes,status,payment_status,total_amount,contact_name,source,ground:grounds(id,name,slug)';
+          return sbFetch(`bookings?select=${bookingsSelect}&order=booking_date.desc,start_time.asc&limit=100`);
+        });
+
         const fetches = [
           sbFetch('areas?select=id,name,slug,city,sort_order&is_active=eq.true&order=sort_order.asc'),
           sbFetch(`grounds?select=${groundsSelect}&order=created_at.desc&limit=100`),
-          sbFetch(`bookings?select=${bookingsSelect}&order=booking_date.desc,start_time.asc&limit=100`),
+          bookingsFetch,
           sbFetch(`ground_leads?select=${leadsSelect}&order=created_at.desc&limit=100`)
         ];
         if (isSuper) {
@@ -2641,7 +2652,7 @@
           const q = state.searchQuery.toLowerCase();
           const matchRef = (b.booking_ref || '').toLowerCase().includes(q);
           const matchCustomer = (b.contact_name || '').toLowerCase().includes(q);
-          const matchGround = (b.ground?.name || '').toLowerCase().includes(q);
+          const matchGround = (b.ground?.name || b.ground_name || '').toLowerCase().includes(q);
           if (!matchRef && !matchCustomer && !matchGround) return false;
         }
         return true;
@@ -2676,7 +2687,7 @@
                   return `
                   <tr>
                     <td class="mono font-semibold" style="color:var(--emerald);">${escapeHtml(b.booking_ref)}</td>
-                    <td style="font-weight:700;">${escapeHtml(b.ground?.name || 'Ground')}</td>
+                    <td style="font-weight:700;">${escapeHtml(b.ground?.name || b.ground_name || 'Ground')}</td>
                     <td>${b.booking_date}</td>
                     <td class="mono">${b.start_time.slice(0,5)} - ${b.end_time.slice(0,5)}</td>
                     <td>${b.duration_minutes}m</td>
